@@ -77,10 +77,188 @@ describe('AppOracleSDK', () => {
       ).rejects.toThrow(AppOracleError);
     });
 
-    it('should validate metadata values are strings', async () => {
+    it('should validate metadata cannot exceed 4 fields', async () => {
+      await expect(
+        sdk.generateFeedbackDeepLink('1.0.0', {
+          field1: 'value1',
+          field2: 'value2',
+          field3: 'value3',
+          field4: 'value4',
+          field5: 'value5',
+        })
+      ).rejects.toThrow(AppOracleError);
+    });
+
+    it('should accept metadata with exactly 4 fields', async () => {
+      const mockResponse = {
+        url: 'apporacle://feedback?key=abc123',
+        key: 'abc123',
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await sdk.generateFeedbackDeepLink('1.0.0', {
+        field1: 'value1',
+        field2: 'value2',
+        field3: 'value3',
+        field4: 'value4',
+      });
+
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('should convert numbers to strings', async () => {
+      const mockResponse = {
+        url: 'apporacle://feedback?key=abc123',
+        key: 'abc123',
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await sdk.generateFeedbackDeepLink('1.0.0', { userId: 12345 });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.apporacle.com/v1/feedback/deeplink',
+        expect.objectContaining({
+          body: JSON.stringify({
+            appId: 'test-app-id',
+            appVersion: '1.0.0',
+            metadata: {
+              userId: '12345',
+            },
+          }),
+        })
+      );
+    });
+
+    it('should convert booleans to strings', async () => {
+      const mockResponse = {
+        url: 'apporacle://feedback?key=abc123',
+        key: 'abc123',
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await sdk.generateFeedbackDeepLink('1.0.0', { isSubscriber: true });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.apporacle.com/v1/feedback/deeplink',
+        expect.objectContaining({
+          body: JSON.stringify({
+            appId: 'test-app-id',
+            appVersion: '1.0.0',
+            metadata: {
+              isSubscriber: 'true',
+            },
+          }),
+        })
+      );
+    });
+
+    it('should convert Date to ISO string', async () => {
+      const mockResponse = {
+        url: 'apporacle://feedback?key=abc123',
+        key: 'abc123',
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const testDate = new Date('2026-01-29T10:30:00.000Z');
+      await sdk.generateFeedbackDeepLink('1.0.0', { timestamp: testDate });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.apporacle.com/v1/feedback/deeplink',
+        expect.objectContaining({
+          body: JSON.stringify({
+            appId: 'test-app-id',
+            appVersion: '1.0.0',
+            metadata: {
+              timestamp: '2026-01-29T10:30:00.000Z',
+            },
+          }),
+        })
+      );
+    });
+
+    it('should convert null to string', async () => {
+      const mockResponse = {
+        url: 'apporacle://feedback?key=abc123',
+        key: 'abc123',
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await sdk.generateFeedbackDeepLink('1.0.0', { optionalField: null });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.apporacle.com/v1/feedback/deeplink',
+        expect.objectContaining({
+          body: JSON.stringify({
+            appId: 'test-app-id',
+            appVersion: '1.0.0',
+            metadata: {
+              optionalField: 'null',
+            },
+          }),
+        })
+      );
+    });
+
+    it('should handle mixed metadata types', async () => {
+      const mockResponse = {
+        url: 'apporacle://feedback?key=abc123',
+        key: 'abc123',
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const testDate = new Date('2026-01-29T10:30:00.000Z');
+      await sdk.generateFeedbackDeepLink('1.0.0', {
+        userId: 12345,
+        isSubscriber: true,
+        timestamp: testDate,
+        platform: 'ios',
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.apporacle.com/v1/feedback/deeplink',
+        expect.objectContaining({
+          body: JSON.stringify({
+            appId: 'test-app-id',
+            appVersion: '1.0.0',
+            metadata: {
+              userId: '12345',
+              isSubscriber: 'true',
+              timestamp: '2026-01-29T10:30:00.000Z',
+              platform: 'ios',
+            },
+          }),
+        })
+      );
+    });
+
+    it('should reject invalid metadata value types', async () => {
       await expect(
         // @ts-expect-error Testing invalid input
-        sdk.generateFeedbackDeepLink('1.0.0', { userId: 123 })
+        sdk.generateFeedbackDeepLink('1.0.0', { invalid: { nested: 'object' } })
       ).rejects.toThrow(AppOracleError);
     });
 

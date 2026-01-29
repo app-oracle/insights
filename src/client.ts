@@ -78,11 +78,27 @@ export class AppOracleSDK {
       throw new AppOracleError('Metadata must be a valid object', 'VALIDATION_ERROR');
     }
 
-    // Validate metadata contains only string values
-    for (const [key, value] of Object.entries(metadata)) {
-      if (typeof value !== 'string') {
+    // Validate metadata field count
+    const metadataEntries = Object.entries(metadata);
+    if (metadataEntries.length > 4) {
+      throw new AppOracleError(
+        'Metadata cannot contain more than 4 fields',
+        'VALIDATION_ERROR'
+      );
+    }
+
+    // Convert metadata values to strings
+    const stringifiedMetadata: Record<string, string> = {};
+    for (const [key, value] of metadataEntries) {
+      if (value === null) {
+        stringifiedMetadata[key] = 'null';
+      } else if (value instanceof Date) {
+        stringifiedMetadata[key] = value.toISOString();
+      } else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        stringifiedMetadata[key] = String(value);
+      } else {
         throw new AppOracleError(
-          `Metadata value for key "${key}" must be a string`,
+          `Metadata value for key "${key}" must be a string, number, boolean, Date, or null`,
           'VALIDATION_ERROR'
         );
       }
@@ -95,7 +111,7 @@ export class AppOracleSDK {
     const payload = {
       appId: this.appId,
       appVersion,
-      metadata,
+      metadata: stringifiedMetadata,
     };
 
     try {

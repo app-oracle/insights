@@ -27,9 +27,10 @@ export interface SDKConfig {
 
 /**
  * Metadata to be stored with the feedback deep link
- * Key-value pairs of string data
+ * Key-value pairs that will be converted to strings
+ * Supports: string, number, boolean, Date, and null
  */
-export type FeedbackMetadata = Record<string, string>;
+export type FeedbackMetadata = Record<string, string | number | boolean | Date | null>;
 
 /**
  * Response from generating a feedback deep link
