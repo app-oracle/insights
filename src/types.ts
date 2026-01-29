@@ -8,13 +8,8 @@ export interface SDKConfig {
   apiKey: string;
 
   /**
-   * Application ID to identify your app
-   */
-  appId: string;
-
-  /**
    * Base URL for the App Oracle API
-   * @default 'https://api.apporacle.com'
+   * @default 'https://us-central1-app-oracle-b7156.cloudfunctions.net'
    */
   baseUrl?: string;
 

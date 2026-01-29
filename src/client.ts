@@ -2,13 +2,22 @@ import { SDKConfig, FeedbackMetadata, DeepLinkResponse, APIErrorResponse } from 
 import { AppOracleError } from './errors';
 
 /**
+ * Default base URL for the App Oracle API
+ */
+const DEFAULT_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.net';
+
+/**
+ * Endpoint path for generating feedback deep links
+ */
+const FEEDBACK_DEEPLINK_ENDPOINT = '/generateFeedbackDeeplink';
+
+/**
  * App Oracle SDK Client
  * 
  * @example
  * ```typescript
  * const sdk = new AppOracleSDK({
- *   apiKey: 'your-api-key',
- *   appId: 'your-app-id'
+ *   apiKey: 'your-api-key'
  * });
  * 
  * const result = await sdk.generateFeedbackDeepLink('1.0.0', {
@@ -21,7 +30,6 @@ import { AppOracleError } from './errors';
  */
 export class AppOracleSDK {
   private readonly apiKey: string;
-  private readonly appId: string;
   private readonly baseUrl: string;
   private readonly timeout: number;
 
@@ -31,13 +39,8 @@ export class AppOracleSDK {
       throw new AppOracleError('API key is required', 'VALIDATION_ERROR');
     }
 
-    if (!config.appId || config.appId.trim() === '') {
-      throw new AppOracleError('App ID is required', 'VALIDATION_ERROR');
-    }
-
     this.apiKey = config.apiKey;
-    this.appId = config.appId;
-    this.baseUrl = config.baseUrl || 'https://api.apporacle.com';
+    this.baseUrl = config.baseUrl || DEFAULT_BASE_URL;
     this.timeout = config.timeout || 10000;
   }
 
@@ -105,11 +108,10 @@ export class AppOracleSDK {
     }
 
     // Construct the API endpoint
-    const endpoint = `${this.baseUrl}/v1/feedback/deeplink`;
+    const endpoint = `${this.baseUrl}${FEEDBACK_DEEPLINK_ENDPOINT}`;
 
     // Prepare request payload
     const payload = {
-      appId: this.appId,
       appVersion,
       metadata: stringifiedMetadata,
     };
@@ -187,7 +189,6 @@ export class AppOracleSDK {
    */
   getConfig(): Omit<SDKConfig, 'apiKey'> {
     return {
-      appId: this.appId,
       baseUrl: this.baseUrl,
       timeout: this.timeout,
     };

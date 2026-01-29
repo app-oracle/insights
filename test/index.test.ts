@@ -1,18 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AppOracleSDK, AppOracleError } from '../src';
 
+const TEST_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.net';
+const TEST_ENDPOINT = `${TEST_BASE_URL}/generateFeedbackDeeplink`;
+
 describe('AppOracleSDK', () => {
   describe('constructor', () => {
     it('should create an instance with valid config', () => {
       const sdk = new AppOracleSDK({
         apiKey: 'test-api-key',
-        appId: 'test-app-id',
       });
 
       expect(sdk).toBeInstanceOf(AppOracleSDK);
       expect(sdk.getConfig()).toEqual({
-        appId: 'test-app-id',
-        baseUrl: 'https://api.apporacle.com',
+        baseUrl: TEST_BASE_URL,
         timeout: 10000,
       });
     });
@@ -20,13 +21,11 @@ describe('AppOracleSDK', () => {
     it('should accept custom baseUrl and timeout', () => {
       const sdk = new AppOracleSDK({
         apiKey: 'test-api-key',
-        appId: 'test-app-id',
         baseUrl: 'https://custom.example.com',
         timeout: 5000,
       });
 
       expect(sdk.getConfig()).toEqual({
-        appId: 'test-app-id',
         baseUrl: 'https://custom.example.com',
         timeout: 5000,
       });
@@ -36,16 +35,6 @@ describe('AppOracleSDK', () => {
       expect(() => {
         new AppOracleSDK({
           apiKey: '',
-          appId: 'test-app-id',
-        });
-      }).toThrow(AppOracleError);
-    });
-
-    it('should throw error when appId is missing', () => {
-      expect(() => {
-        new AppOracleSDK({
-          apiKey: 'test-api-key',
-          appId: '',
         });
       }).toThrow(AppOracleError);
     });
@@ -57,7 +46,6 @@ describe('AppOracleSDK', () => {
     beforeEach(() => {
       sdk = new AppOracleSDK({
         apiKey: 'test-api-key',
-        appId: 'test-app-id',
       });
       
       // Reset fetch mock
@@ -124,10 +112,9 @@ describe('AppOracleSDK', () => {
       await sdk.generateFeedbackDeepLink('1.0.0', { userId: 12345 });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.apporacle.com/v1/feedback/deeplink',
+        TEST_ENDPOINT,
         expect.objectContaining({
           body: JSON.stringify({
-            appId: 'test-app-id',
             appVersion: '1.0.0',
             metadata: {
               userId: '12345',
@@ -151,10 +138,9 @@ describe('AppOracleSDK', () => {
       await sdk.generateFeedbackDeepLink('1.0.0', { isSubscriber: true });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.apporacle.com/v1/feedback/deeplink',
+        TEST_ENDPOINT,
         expect.objectContaining({
           body: JSON.stringify({
-            appId: 'test-app-id',
             appVersion: '1.0.0',
             metadata: {
               isSubscriber: 'true',
@@ -179,10 +165,9 @@ describe('AppOracleSDK', () => {
       await sdk.generateFeedbackDeepLink('1.0.0', { timestamp: testDate });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.apporacle.com/v1/feedback/deeplink',
+        TEST_ENDPOINT,
         expect.objectContaining({
           body: JSON.stringify({
-            appId: 'test-app-id',
             appVersion: '1.0.0',
             metadata: {
               timestamp: '2026-01-29T10:30:00.000Z',
@@ -206,10 +191,9 @@ describe('AppOracleSDK', () => {
       await sdk.generateFeedbackDeepLink('1.0.0', { optionalField: null });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.apporacle.com/v1/feedback/deeplink',
+        TEST_ENDPOINT,
         expect.objectContaining({
           body: JSON.stringify({
-            appId: 'test-app-id',
             appVersion: '1.0.0',
             metadata: {
               optionalField: 'null',
@@ -239,10 +223,9 @@ describe('AppOracleSDK', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.apporacle.com/v1/feedback/deeplink',
+        TEST_ENDPOINT,
         expect.objectContaining({
           body: JSON.stringify({
-            appId: 'test-app-id',
             appVersion: '1.0.0',
             metadata: {
               userId: '12345',
@@ -281,7 +264,7 @@ describe('AppOracleSDK', () => {
 
       expect(result).toEqual(mockResponse);
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.apporacle.com/v1/feedback/deeplink',
+        TEST_ENDPOINT,
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -289,7 +272,6 @@ describe('AppOracleSDK', () => {
             'Authorization': 'Bearer test-api-key',
           }),
           body: JSON.stringify({
-            appId: 'test-app-id',
             appVersion: '1.0.0',
             metadata: {
               userId: '12345',
