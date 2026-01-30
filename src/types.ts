@@ -21,11 +21,11 @@ export interface SDKConfig {
 }
 
 /**
- * Metadata to be stored with the feedback deep link
+ * User-provided metadata to be stored with deep links
  * Key-value pairs that will be converted to strings
  * Supports: string, number, boolean, Date, and null
  */
-export type FeedbackMetadata = Record<string, string | number | boolean | Date | null>;
+export type UserMetadata = Record<string, string | number | boolean | Date | null>;
 
 /**
  * Options for generating a feedback deep link
@@ -43,15 +43,21 @@ export interface FeedbackLinkOptions {
   wallet?: string;
 
   /**
-   * Key-value pairs of metadata to store with the feedback (max 3 fields when wallet provided, 4 otherwise)
+   * Key-value pairs of metadata to store with the feedback (max 4 fields)
    */
-  metadata?: FeedbackMetadata;
+  metadata?: UserMetadata;
 
   /**
    * Request an app review. Defaults to `true` when wallet is provided, `false` otherwise.
    * Set explicitly to `false` to opt out.
    */
   requestAppReview?: boolean;
+
+  /**
+   * Your Mini App deep link to specifically redirect the user to after they have left feedback.
+   * Will return to your app if undefined.
+   */
+  redirectUrl?: string;
 }
 
 /**
@@ -70,9 +76,15 @@ export interface ReviewLinkOptions {
   wallet: string;
 
   /**
-   * Key-value pairs of metadata to store with the review (max 3 fields)
+   * Key-value pairs of metadata to store with the review (max 4 fields)
    */
-  metadata?: FeedbackMetadata;
+  metadata?: UserMetadata;
+
+  /**
+   * Your Mini App deep link to specifically redirect the user to after they have left a review.
+   * Will return to your app if undefined.
+   */
+  redirectUrl?: string;
 }
 
 /**

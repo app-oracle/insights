@@ -1,9 +1,9 @@
-import { FeedbackLinkOptions, DeepLinkResponse, FeedbackMetadata } from '../types';
-import { AppOracleError } from '../errors';
-import { hashWallet } from '../utils/wallet';
+import { FeedbackLinkOptions, DeepLinkResponse } from '../types';
 import { stringifyMetadata } from '../utils/metadata';
+import { hashWallet } from '../utils/wallet';
+import { AppOracleError } from '../errors';
 
-const FEEDBACK_DEEPLINK_ENDPOINT = '/generateFeedbackDeepLink';
+const FEEDBACK_DEEPLINK_ENDPOINT = '/feedbackDeepLink';
 
 interface ClientContext {
   apiKey: string;
@@ -21,7 +21,7 @@ export async function getFeedbackLink(
   context: ClientContext,
   options: FeedbackLinkOptions
 ): Promise<DeepLinkResponse> {
-  const { appVersion, wallet, metadata, requestAppReview } = options;
+  const { appVersion, wallet, metadata, requestAppReview, redirectUrl } = options;
 
   // Validate inputs
   if (!appVersion || appVersion.trim() === '') {
@@ -31,12 +31,12 @@ export async function getFeedbackLink(
   // Determine effective requestAppReview value
   // Default to true if wallet provided, false otherwise
   const hasWallet = wallet && wallet.trim() !== '';
-  const effectiveRequestAppReview = requestAppReview !== undefined 
+  const requiresReviewRequest = requestAppReview !== undefined 
     ? requestAppReview 
     : hasWallet;
 
   // Validate that requestAppReview=true requires a wallet for user verification
-  if (effectiveRequestAppReview && !hasWallet) {
+  if (requiresReviewRequest && !hasWallet) {
     throw new AppOracleError(
       'Wallet address is required when requesting a review. Reviews are only available for wallet-verified users to ensure authenticity.',
       'VALIDATION_ERROR'
@@ -47,12 +47,11 @@ export async function getFeedbackLink(
     throw new AppOracleError('Metadata must be a valid object', 'VALIDATION_ERROR');
   }
 
-  // Validate metadata field count (reserve 1 field for wallet hash if provided)
+  // Validate metadata field count (max 4 fields)
   const metadataEntries = metadata ? Object.entries(metadata) : [];
-  const maxFields = wallet ? 3 : 4;
-  if (metadataEntries.length > maxFields) {
+  if (metadataEntries.length > 4) {
     throw new AppOracleError(
-      `Metadata cannot contain more than ${maxFields} fields`,
+      'Metadata cannot contain more than 4 fields',
       'VALIDATION_ERROR'
     );
   }
@@ -62,14 +61,9 @@ export async function getFeedbackLink(
 
   // Hash wallet if provided to enable user verification
   // The wallet is hashed using SHA-256 to protect user privacy
+  let walletHash: string | undefined;
   if (wallet && wallet.trim() !== '') {
-    const walletHash = await hashWallet(wallet);
-    stringifiedMetadata['_walletHash'] = walletHash;
-  }
-
-  // Add review request flag if true
-  if (effectiveRequestAppReview) {
-    stringifiedMetadata['_requestedAppReview'] = 'true';
+    walletHash = await hashWallet(wallet);
   }
 
   // Construct the API endpoint
@@ -79,6 +73,9 @@ export async function getFeedbackLink(
   const payload = {
     appVersion,
     metadata: stringifiedMetadata,
+    ...(walletHash && { walletHash }),
+    ...(requiresReviewRequest && { requestReview: true }),
+    ...(redirectUrl && { redirectUrl }),
   };
 
   try {

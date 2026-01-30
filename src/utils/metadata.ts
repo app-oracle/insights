@@ -1,5 +1,5 @@
 import { AppOracleError } from '../errors';
-import { FeedbackMetadata } from '../types';
+import { UserMetadata } from '../types';
 
 /**
  * Convert metadata values to strings
@@ -7,7 +7,7 @@ import { FeedbackMetadata } from '../types';
  * Validates and converts metadata values to string format for API transmission.
  * Supports string, number, boolean, Date, and null types.
  */
-export function stringifyMetadata(metadata?: FeedbackMetadata): Record<string, string> {
+export function stringifyMetadata(metadata?: UserMetadata): Record<string, string> {
   const stringifiedMetadata: Record<string, string> = {};
   
   if (!metadata) {

@@ -37,7 +37,7 @@ describe('AppOracleSDK - getReviewLink', () => {
       expect(result).toEqual(mockResponse);
     });
 
-    it('should validate metadata cannot exceed 3 fields', async () => {
+    it('should validate metadata cannot exceed 4 fields', async () => {
       await expect(
         sdk.getReviewLink({
           appVersion: '1.0.0',
@@ -47,6 +47,7 @@ describe('AppOracleSDK - getReviewLink', () => {
             field2: 'value2',
             field3: 'value3',
             field4: 'value4',
+            field5: 'value5',
           }
         })
       ).rejects.toThrow(AppOracleError);
@@ -72,8 +73,7 @@ describe('AppOracleSDK - getReviewLink', () => {
       });
 
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
-      expect(callBody.metadata._requestedAppReview).toBeUndefined();
+      expect(callBody.walletHash).toBeDefined();
     });
 
     it('should hash wallet and include in metadata', async () => {
@@ -96,8 +96,8 @@ describe('AppOracleSDK - getReviewLink', () => {
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
       
       // Verify wallet hash is present
-      expect(callBody.metadata._walletHash).toBeDefined();
-      expect(callBody.metadata._walletHash).toHaveLength(64); // SHA-256 hex is 64 chars
+      expect(callBody.walletHash).toBeDefined();
+      expect(callBody.walletHash).toHaveLength(64); // SHA-256 hex is 64 chars
     });
   });
 
@@ -136,8 +136,7 @@ describe('AppOracleSDK - getReviewLink', () => {
       );
       
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
-      expect(callBody.metadata._requestedAppReview).toBeUndefined();
+      expect(callBody.walletHash).toBeDefined();
       expect(callBody.metadata.userId).toBe('12345');
       expect(callBody.metadata.platform).toBe('ios');
     });

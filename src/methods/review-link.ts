@@ -1,7 +1,7 @@
-import { ReviewLinkOptions, DeepLinkResponse, FeedbackMetadata } from '../types';
-import { AppOracleError } from '../errors';
-import { hashWallet } from '../utils/wallet';
+import { ReviewLinkOptions, DeepLinkResponse } from '../types';
 import { stringifyMetadata } from '../utils/metadata';
+import { hashWallet } from '../utils/wallet';
+import { AppOracleError } from '../errors';
 
 const REVIEW_DEEPLINK_ENDPOINT = '/reviewDeepLink';
 
@@ -21,7 +21,7 @@ export async function getReviewLink(
   context: ClientContext,
   options: ReviewLinkOptions
 ): Promise<DeepLinkResponse> {
-  const { appVersion, wallet, metadata } = options;
+  const { appVersion, wallet, metadata, redirectUrl } = options;
 
   // Validate inputs
   if (!appVersion || appVersion.trim() === '') {
@@ -36,11 +36,11 @@ export async function getReviewLink(
     throw new AppOracleError('Metadata must be a valid object', 'VALIDATION_ERROR');
   }
 
-  // Validate metadata field count (max 3 fields)
+  // Validate metadata field count (max 4 fields)
   const metadataEntries = metadata ? Object.entries(metadata) : [];
-  if (metadataEntries.length > 3) {
+  if (metadataEntries.length > 4) {
     throw new AppOracleError(
-      'Metadata cannot contain more than 3 fields',
+      'Metadata cannot contain more than 4 fields',
       'VALIDATION_ERROR'
     );
   }
@@ -50,7 +50,6 @@ export async function getReviewLink(
 
   // Hash wallet for user verification
   const walletHash = await hashWallet(wallet);
-  stringifiedMetadata['_walletHash'] = walletHash;
 
   // Construct the API endpoint
   const endpoint = `${context.baseUrl}${REVIEW_DEEPLINK_ENDPOINT}`;
@@ -59,6 +58,8 @@ export async function getReviewLink(
   const payload = {
     appVersion,
     metadata: stringifiedMetadata,
+    walletHash,
+    ...(redirectUrl && { redirectUrl }),
   };
 
   try {

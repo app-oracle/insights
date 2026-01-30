@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AppOracleSDK, AppOracleError } from '../src';
 
 const TEST_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.net';
-const TEST_ENDPOINT = `${TEST_BASE_URL}/generateFeedbackDeepLink`;
+const TEST_ENDPOINT = `${TEST_BASE_URL}/feedbackDeepLink`;
 
 describe('AppOracleSDK - getFeedbackLink', () => {
   let sdk: AppOracleSDK;
@@ -36,7 +36,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       ).rejects.toThrow(AppOracleError);
     });
 
-    it('should validate metadata cannot exceed 3 fields with wallet', async () => {
+    it('should validate metadata cannot exceed 4 fields', async () => {
       await expect(
         sdk.getFeedbackLink({
           appVersion: '1.0.0',
@@ -46,6 +46,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
             field2: 'value2',
             field3: 'value3',
             field4: 'value4',
+            field5: 'value5',
           }
         })
       ).rejects.toThrow(AppOracleError);
@@ -79,8 +80,8 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       expect(result).toEqual(mockResponse);
       
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeUndefined();
-      expect(callBody.metadata._requestedAppReview).toBeUndefined();
+      expect(callBody.walletHash).toBeUndefined();
+      expect(callBody.requestReview).toBeUndefined();
     });
 
     it('should accept metadata with exactly 3 fields when wallet provided', async () => {
@@ -108,7 +109,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       
       // Wallet provided should default requestAppReview to true
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._requestedAppReview).toBe('true');
+      expect(callBody.requestReview).toBe(true);
     });
   });
 
@@ -132,8 +133,8 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       });
 
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
-      expect(callBody.metadata._requestedAppReview).toBe('true');
+      expect(callBody.walletHash).toBeDefined();
+      expect(callBody.requestReview).toBe(true);
     });
 
     it('should not include requestAppReview when explicitly false', async () => {
@@ -155,8 +156,8 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       });
 
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
-      expect(callBody.metadata._requestedAppReview).toBeUndefined();
+      expect(callBody.walletHash).toBeDefined();
+      expect(callBody.requestReview).toBeUndefined();
     });
   });
 
@@ -186,7 +187,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       );
       
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
+      expect(callBody.walletHash).toBeDefined();
       expect(callBody.metadata.userId).toBe('12345');
     });
 
@@ -208,7 +209,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       });
 
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
+      expect(callBody.walletHash).toBeDefined();
       expect(callBody.metadata.isSubscriber).toBe('true');
     });
 
@@ -231,7 +232,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       });
 
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
+      expect(callBody.walletHash).toBeDefined();
       expect(callBody.metadata.timestamp).toBe('2026-01-29T10:30:00.000Z');
     });
 
@@ -253,7 +254,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       });
 
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
+      expect(callBody.walletHash).toBeDefined();
       expect(callBody.metadata.optionalField).toBe('null');
     });
 
@@ -280,7 +281,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       });
 
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
+      expect(callBody.walletHash).toBeDefined();
       expect(callBody.metadata.userId).toBe('12345');
       expect(callBody.metadata.isSubscriber).toBe('true');
       expect(callBody.metadata.timestamp).toBe('2026-01-29T10:30:00.000Z');
@@ -308,8 +309,8 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
       
       // Verify wallet hash is present
-      expect(callBody.metadata._walletHash).toBeDefined();
-      expect(callBody.metadata._walletHash).toHaveLength(64); // SHA-256 hex is 64 chars
+      expect(callBody.walletHash).toBeDefined();
+      expect(callBody.walletHash).toHaveLength(64); // SHA-256 hex is 64 chars
       
       // Verify wallet is normalized (lowercased)
       await sdk.getFeedbackLink({
@@ -320,7 +321,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       const secondCallBody = JSON.parse((global.fetch as any).mock.calls[1][1].body);
       
       // Same wallet (different case) should produce same hash
-      expect(callBody.metadata._walletHash).toBe(secondCallBody.metadata._walletHash);
+      expect(callBody.walletHash).toBe(secondCallBody.walletHash);
     });
   });
 
@@ -359,7 +360,7 @@ describe('AppOracleSDK - getFeedbackLink', () => {
       );
       
       const callBody = JSON.parse((global.fetch as any).mock.calls[0][1].body);
-      expect(callBody.metadata._walletHash).toBeDefined();
+      expect(callBody.walletHash).toBeDefined();
       expect(callBody.metadata.userId).toBe('12345');
       expect(callBody.metadata.platform).toBe('ios');
     });
