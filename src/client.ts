@@ -1,15 +1,13 @@
-import { SDKConfig, FeedbackMetadata, DeepLinkResponse, APIErrorResponse } from './types';
+import { SDKConfig, DeepLinkResponse, FeedbackLinkOptions, ReviewLinkOptions } from './types';
 import { AppOracleError } from './errors';
+import { getFeedbackLink } from './methods/feedback-link';
+import { getReviewLink } from './methods/review-link';
+import { hashWallet } from './utils/wallet';
 
 /**
  * Default base URL for the App Oracle API
  */
 const DEFAULT_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.net';
-
-/**
- * Endpoint path for generating feedback deep links
- */
-const FEEDBACK_DEEPLINK_ENDPOINT = '/generateFeedbackDeeplink';
 
 /**
  * App Oracle SDK Client
@@ -20,9 +18,13 @@ const FEEDBACK_DEEPLINK_ENDPOINT = '/generateFeedbackDeeplink';
  *   apiKey: 'your-api-key'
  * });
  * 
- * const result = await sdk.generateFeedbackDeepLink('1.0.0', {
- *   userId: '12345',
- *   platform: 'ios'
+ * const result = await sdk.getFeedbackLink({
+ *   appVersion: '1.0.0',
+ *   wallet: '0x123...',
+ *   metadata: {
+ *     userId: '12345',
+ *     platform: 'ios'
+ *   }
  * });
  * 
  * console.log(result.url); // Deep link to share
@@ -44,144 +46,102 @@ export class AppOracleSDK {
     this.timeout = config.timeout || 10000;
   }
 
+  private getContext() {
+    return {
+      apiKey: this.apiKey,
+      baseUrl: this.baseUrl,
+      timeout: this.timeout,
+    };
+  }
+
   /**
    * Generate a feedback deep link
    * 
    * Creates a Redis entry with the provided metadata and returns a deep link URL
    * that can be used to access the feedback data in your mini-app.
    * 
-   * @param appVersion - The version of your app (e.g., "1.0.0")
-   * @param metadata - Key-value pairs of metadata to store with the feedback
+   * @param options - Options for generating the feedback link
    * @returns Promise resolving to the deep link response with URL and key
    * 
    * @throws {AppOracleError} If validation fails, authentication fails, or network error occurs
    * 
    * @example
    * ```typescript
-   * const result = await sdk.generateFeedbackDeepLink('1.2.3', {
-   *   userId: '12345',
-   *   platform: 'ios',
-   *   deviceModel: 'iPhone 14'
+   * // With wallet (review request defaults to true)
+   * const result = await sdk.getFeedbackLink({
+   *   appVersion: '1.2.3',
+   *   wallet: '0x1234...',
+   *   metadata: {
+   *     swaps: '69',
+   *     highscore: '420',
+   *     proUser: 'true',
+   *   }
    * });
    * 
+   * // Opt out of review request
+   * const result = await sdk.getFeedbackLink({
+   *   appVersion: '1.2.3',
+   *   wallet: '0x1234...',
+   *   metadata: {},
+   *   requestAppReview: false
+   * });
+   * 
+   * // Without wallet (no review request)
+   * const result = await sdk.getFeedbackLink({ appVersion: '1.2.3' });
+   * 
    * // Share result.url with users
-   * // Use result.key for tracking
    * ```
    */
-  async generateFeedbackDeepLink(
-    appVersion: string,
-    metadata: FeedbackMetadata
-  ): Promise<DeepLinkResponse> {
-    // Validate inputs
-    if (!appVersion || appVersion.trim() === '') {
-      throw new AppOracleError('App version is required', 'VALIDATION_ERROR');
-    }
+  async getFeedbackLink(options: FeedbackLinkOptions): Promise<DeepLinkResponse> {
+    return getFeedbackLink(this.getContext(), options);
+  }
 
-    if (!metadata || typeof metadata !== 'object') {
-      throw new AppOracleError('Metadata must be a valid object', 'VALIDATION_ERROR');
-    }
+  /**
+   * Hash wallet address using SHA-256
+   * 
+   * Use this to hash wallet addresses with the same algorithm used internally
+   * for client-side verification of deep link ownership.
+   * 
+   * @param wallet - Wallet address to hash
+   * @returns Promise resolving to the SHA-256 hash as a hex string
+   * 
+   * @example
+   * ```typescript
+   * const hash = await sdk.hashWallet('0x1234...');
+   * // Compare with _walletHash from deep link metadata
+   * ```
+   */
+  async hashWallet(wallet: string): Promise<string> {
+    return hashWallet(wallet);
+  }
 
-    // Validate metadata field count
-    const metadataEntries = Object.entries(metadata);
-    if (metadataEntries.length > 4) {
-      throw new AppOracleError(
-        'Metadata cannot contain more than 4 fields',
-        'VALIDATION_ERROR'
-      );
-    }
-
-    // Convert metadata values to strings
-    const stringifiedMetadata: Record<string, string> = {};
-    for (const [key, value] of metadataEntries) {
-      if (value === null) {
-        stringifiedMetadata[key] = 'null';
-      } else if (value instanceof Date) {
-        stringifiedMetadata[key] = value.toISOString();
-      } else if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-        stringifiedMetadata[key] = String(value);
-      } else {
-        throw new AppOracleError(
-          `Metadata value for key "${key}" must be a string, number, boolean, Date, or null`,
-          'VALIDATION_ERROR'
-        );
-      }
-    }
-
-    // Construct the API endpoint
-    const endpoint = `${this.baseUrl}${FEEDBACK_DEEPLINK_ENDPOINT}`;
-
-    // Prepare request payload
-    const payload = {
-      appVersion,
-      metadata: stringifiedMetadata,
-    };
-
-    try {
-      // Create abort controller for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-      // Make API request
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'X-App-Oracle-SDK': 'typescript/0.1.0',
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      // Handle non-OK responses
-      if (!response.ok) {
-        const errorData: APIErrorResponse = await response.json().catch(() => ({
-          error: 'Unknown error',
-        }));
-
-        throw new AppOracleError(
-          errorData.message || errorData.error || `Request failed with status ${response.status}`,
-          errorData.code || 'API_ERROR',
-          response.status
-        );
-      }
-
-      // Parse successful response
-      const data: DeepLinkResponse = await response.json();
-
-      // Validate response structure
-      if (!data.url || !data.key) {
-        throw new AppOracleError(
-          'Invalid response from server: missing url or key',
-          'INVALID_RESPONSE'
-        );
-      }
-
-      return data;
-    } catch (error) {
-      // Handle network errors
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new AppOracleError(
-            `Request timed out after ${this.timeout}ms`,
-            'TIMEOUT_ERROR'
-          );
-        }
-
-        if (error instanceof AppOracleError) {
-          throw error;
-        }
-
-        throw new AppOracleError(
-          `Network error: ${error.message}`,
-          'NETWORK_ERROR'
-        );
-      }
-
-      throw new AppOracleError('Unknown error occurred', 'UNKNOWN_ERROR');
-    }
+  /**
+   * Generate a review deep link
+   * 
+   * Creates a Redis entry with the provided metadata and returns a deep link URL
+   * specifically for app reviews. Requires a wallet address for user verification.
+   * 
+   * @param options - Options for generating the review link
+   * @returns Promise resolving to the deep link response with URL and key
+   * 
+   * @throws {AppOracleError} If validation fails, authentication fails, or network error occurs
+   * 
+   * @example
+   * ```typescript
+   * const result = await sdk.getReviewLink({
+   *   appVersion: '1.2.3',
+   *   wallet: '0x1234...',
+   *   metadata: {
+   *     userId: '12345',
+   *     platform: 'ios'
+   *   }
+   * });
+   * 
+   * // Share result.url with users for app review
+   * ```
+   */
+  async getReviewLink(options: ReviewLinkOptions): Promise<DeepLinkResponse> {
+    return getReviewLink(this.getContext(), options);
   }
 
   /**

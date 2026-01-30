@@ -28,6 +28,54 @@ export interface SDKConfig {
 export type FeedbackMetadata = Record<string, string | number | boolean | Date | null>;
 
 /**
+ * Options for generating a feedback deep link
+ */
+export interface FeedbackLinkOptions {
+  /**
+   * The version of your app to record version metrics (e.g., "1.0.0")
+   */
+  appVersion: string;
+
+  /**
+   * User's wallet address. The wallet is hashed using SHA-256 to protect user privacy
+   * while enabling verification that reviews come from your users.
+   */
+  wallet?: string;
+
+  /**
+   * Key-value pairs of metadata to store with the feedback (max 3 fields when wallet provided, 4 otherwise)
+   */
+  metadata?: FeedbackMetadata;
+
+  /**
+   * Request an app review. Defaults to `true` when wallet is provided, `false` otherwise.
+   * Set explicitly to `false` to opt out.
+   */
+  requestAppReview?: boolean;
+}
+
+/**
+ * Options for generating a review deep link
+ */
+export interface ReviewLinkOptions {
+  /**
+   * The version of your app to record version metrics (e.g., "1.0.0")
+   */
+  appVersion: string;
+
+  /**
+   * User's wallet address (required). The wallet is hashed using SHA-256 to protect user privacy
+   * while enabling verification that reviews come from your users.
+   */
+  wallet: string;
+
+  /**
+   * Key-value pairs of metadata to store with the review (max 3 fields)
+   */
+  metadata?: FeedbackMetadata;
+}
+
+/**
  * Response from generating a feedback deep link
  */
 export interface DeepLinkResponse {

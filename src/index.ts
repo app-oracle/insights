@@ -7,4 +7,4 @@
 
 export { AppOracleSDK } from './client';
 export { AppOracleError } from './errors';
-export type { SDKConfig, FeedbackMetadata, DeepLinkResponse } from './types';
+export type { SDKConfig, FeedbackMetadata, FeedbackLinkOptions, ReviewLinkOptions, DeepLinkResponse } from './types';

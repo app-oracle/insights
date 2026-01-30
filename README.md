@@ -20,15 +20,17 @@ import { AppOracleSDK } from 'app-oracle-sdk';
 // Initialize the SDK
 const sdk = new AppOracleSDK({
   apiKey: 'your-api-key',
-  appId: 'your-app-id',
 });
 
-// Generate a feedback deep link
-const result = await sdk.generateFeedbackDeepLink('1.2.3', {
-  userId: '12345',
-  platform: 'ios',
-  deviceModel: 'iPhone 14',
-  screenName: 'HomeScreen',
+// Generate a feedback deep link with wallet verification
+const result = await sdk.getFeedbackLink({
+  appVersion: '1.2.3',
+  wallet: '0x1234567890abcdef',
+  metadata: {
+    userId: '12345',
+    platform: 'ios',
+    deviceModel: 'iPhone 14',
+  }
 });
 
 console.log(result.url);  // apporacle://feedback?key=abc123
@@ -50,8 +52,7 @@ new AppOracleSDK(config: SDKConfig)
 **Parameters:**
 
 - `config.apiKey` (string, required) - Your App Oracle API key
-- `config.appId` (string, required) - Your application ID
-- `config.baseUrl` (string, optional) - Custom API base URL (default: `https://api.apporacle.com`)
+- `config.baseUrl` (string, optional) - Custom API base URL (default: `https://us-central1-app-oracle-b7156.cloudfunctions.net`)
 - `config.timeout` (number, optional) - Request timeout in milliseconds (default: `10000`)
 
 **Example:**
@@ -59,19 +60,20 @@ new AppOracleSDK(config: SDKConfig)
 ```typescript
 const sdk = new AppOracleSDK({
   apiKey: process.env.APP_ORACLE_API_KEY!,
-  appId: 'my-mobile-app',
   timeout: 5000,
 });
 ```
 
-#### `generateFeedbackDeepLink(appVersion, metadata)`
+#### `getFeedbackLink(options)`
 
-Generate a feedback deep link with associated metadata stored in Redis.
+Generate a feedback deep link with wallet verification and optional app review request.
 
 **Parameters:**
 
-- `appVersion` (string, required) - The version of your app (e.g., "1.0.0")
-- `metadata` (Record<string, string>, required) - Key-value pairs of metadata to store
+- `options.appVersion` (string, required) - The version of your app (e.g., "1.0.0")
+- `options.wallet` (string, optional) - User's wallet address (hashed with SHA-256 for privacy)
+- `options.metadata` (Record<string, string | number | boolean | Date | null>, optional) - Key-value pairs to store (max 3 fields with wallet, 4 without)
+- `options.requestAppReview` (boolean, optional) - Request app review (defaults to `true` when wallet provided, `false` otherwise)
 
 **Returns:** `Promise<DeepLinkResponse>`
 
@@ -86,15 +88,55 @@ interface DeepLinkResponse {
 **Example:**
 
 ```typescript
-const deepLink = await sdk.generateFeedbackDeepLink('2.1.0', {
-  userId: 'user_12345',
-  sessionId: 'sess_abc789',
-  feature: 'checkout',
-  timestamp: new Date().toISOString(),
+// With wallet verification and app review (review defaults to true)
+const deepLink = await sdk.getFeedbackLink({
+  appVersion: '2.1.0',
+  wallet: '0x1234567890abcdef',
+  metadata: {
+    userId: 'user_12345',
+    sessionId: 'sess_abc789',
+    feature: 'checkout',
+  }
+});
+
+// Without wallet (no review request)
+const deepLink = await sdk.getFeedbackLink({
+  appVersion: '2.1.0',
+  metadata: {
+    userId: 'user_12345',
+    sessionId: 'sess_abc789',
+    feature: 'checkout',
+    timestamp: new Date(),
+  }
+});
+
+// With wallet but opt out of review
+const deepLink = await sdk.getFeedbackLink({
+  appVersion: '2.1.0',
+  wallet: '0x1234567890abcdef',
+  metadata: { userId: 'user_12345' },
+  requestAppReview: false
 });
 
 // Share deepLink.url with your users
 // Use deepLink.key for tracking or analytics
+```
+
+#### `hashWallet(wallet)`
+
+Hash a wallet address using SHA-256. Use this to verify wallet hashes match the same algorithm used internally.
+
+**Parameters:**
+
+- `wallet` (string, required) - Wallet address to hash
+
+**Returns:** `Promise<string>` - SHA-256 hash as hex string
+
+**Example:**
+
+```typescript
+const hash = await sdk.hashWallet('0x1234567890abcdef');
+// Compare with _walletHash from deep link metadata
 ```
 
 ### Error Handling
@@ -105,7 +147,11 @@ The SDK throws `AppOracleError` for all error conditions:
 import { AppOracleSDK, AppOracleError } from 'app-oracle-sdk';
 
 try {
-  const result = await sdk.generateFeedbackDeepLink('1.0.0', metadata);
+  const result = await sdk.getFeedbackLink({
+    appVersion: '1.0.0',
+    wallet: '0x123',
+    metadata: { userId: '123' }
+  });
 } catch (error) {
   if (error instanceof AppOracleError) {
     console.error('Error code:', error.code);
@@ -139,17 +185,21 @@ The SDK is written in TypeScript and includes full type definitions:
 import type { 
   SDKConfig, 
   FeedbackMetadata, 
+  FeedbackLinkOptions,
   DeepLinkResponse 
 } from 'app-oracle-sdk';
 
 const config: SDKConfig = {
   apiKey: 'key',
-  appId: 'app',
 };
 
-const metadata: FeedbackMetadata = {
-  userId: '123',
-  platform: 'android',
+const options: FeedbackLinkOptions = {
+  appVersion: '1.0.0',
+  wallet: '0x123',
+  metadata: {
+    userId: '123',
+    platform: 'android',
+  }
 };
 ```
 

@@ -8,8 +8,8 @@ export class AppOracleError extends Error {
   constructor(message: string, code?: string, statusCode?: number) {
     super(message);
     this.name = 'AppOracleError';
-    this.code = code;
     this.statusCode = statusCode;
+    this.code = code;
 
     // Maintains proper stack trace for where our error was thrown (only available on V8)
     if (Error.captureStackTrace) {
