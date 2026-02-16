@@ -97,11 +97,6 @@ export interface DeepLinkResponse {
   url: string;
 
   /**
-   * The unique key used to look up feedback data
-   */
-  key: string;
-
-  /**
    * Optional expiration timestamp for the deep link
    */
   expiresAt?: string;

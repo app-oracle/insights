@@ -122,9 +122,11 @@ const deepLink = await sdk.getFeedbackLink({
 // Use deepLink.key for tracking or analytics
 ```
 
-#### `hashWallet(wallet)`
+#### `walletHash(wallet)`
 
 Hash a wallet address using SHA-256. Use this to verify wallet hashes match the same algorithm used internally.
+
+This function can be used via the SDK instance or imported directly without initializing the SDK.
 
 **Parameters:**
 
@@ -135,7 +137,13 @@ Hash a wallet address using SHA-256. Use this to verify wallet hashes match the 
 **Example:**
 
 ```typescript
-const hash = await sdk.hashWallet('0x1234567890abcdef');
+// Via SDK instance
+const hash = await sdk.walletHash('0x1234567890abcdef');
+
+// Or import directly without SDK
+import { walletHash } from 'app-oracle-sdk';
+const hash = await walletHash('0x1234567890abcdef');
+
 // Compare with _walletHash from deep link metadata
 ```
 

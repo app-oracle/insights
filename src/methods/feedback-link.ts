@@ -1,6 +1,6 @@
 import { FeedbackLinkOptions, DeepLinkResponse } from '../types';
 import { stringifyMetadata } from '../utils/metadata';
-import { hashWallet } from '../utils/wallet';
+import { walletHash } from '../utils/wallet';
 import { AppOracleError } from '../errors';
 
 const FEEDBACK_DEEPLINK_ENDPOINT = '/feedbackDeepLink';
@@ -61,9 +61,9 @@ export async function getFeedbackLink(
 
   // Hash wallet if provided to enable user verification
   // The wallet is hashed using SHA-256 to protect user privacy
-  let walletHash: string | undefined;
+  let walletHashValue: string | undefined;
   if (wallet && wallet.trim() !== '') {
-    walletHash = await hashWallet(wallet);
+    walletHashValue = await walletHash(wallet);
   }
 
   // Construct the API endpoint
@@ -73,7 +73,7 @@ export async function getFeedbackLink(
   const payload = {
     appVersion,
     metadata: stringifiedMetadata,
-    ...(walletHash && { walletHash }),
+    ...(walletHashValue && { walletHash: walletHashValue }),
     ...(requiresReviewRequest && { requestReview: true }),
     ...(redirectUrl && { redirectUrl }),
   };
@@ -114,9 +114,9 @@ export async function getFeedbackLink(
     const data: DeepLinkResponse = await response.json();
 
     // Validate response structure
-    if (!data.url || !data.key) {
+    if (!data.url) {
       throw new AppOracleError(
-        'Invalid response from server: missing url or key',
+        'Invalid response from server: missing url',
         'INVALID_RESPONSE'
       );
     }

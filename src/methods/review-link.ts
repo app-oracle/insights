@@ -1,6 +1,6 @@
 import { ReviewLinkOptions, DeepLinkResponse } from '../types';
 import { stringifyMetadata } from '../utils/metadata';
-import { hashWallet } from '../utils/wallet';
+import { walletHash } from '../utils/wallet';
 import { AppOracleError } from '../errors';
 
 const REVIEW_DEEPLINK_ENDPOINT = '/reviewDeepLink';
@@ -49,7 +49,7 @@ export async function getReviewLink(
   const stringifiedMetadata = stringifyMetadata(metadata);
 
   // Hash wallet for user verification
-  const walletHash = await hashWallet(wallet);
+  const walletHashValue = await walletHash(wallet);
 
   // Construct the API endpoint
   const endpoint = `${context.baseUrl}${REVIEW_DEEPLINK_ENDPOINT}`;
@@ -58,7 +58,7 @@ export async function getReviewLink(
   const payload = {
     appVersion,
     metadata: stringifiedMetadata,
-    walletHash,
+    walletHash: walletHashValue,
     ...(redirectUrl && { redirectUrl }),
   };
 
@@ -98,9 +98,9 @@ export async function getReviewLink(
     const data: DeepLinkResponse = await response.json();
 
     // Validate response structure
-    if (!data.url || !data.key) {
+    if (!data.url) {
       throw new AppOracleError(
-        'Invalid response from server: missing url or key',
+        'Invalid response from server: missing url',
         'INVALID_RESPONSE'
       );
     }

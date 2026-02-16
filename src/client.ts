@@ -2,7 +2,7 @@ import { SDKConfig, DeepLinkResponse, FeedbackLinkOptions, ReviewLinkOptions } f
 import { AppOracleError } from './errors';
 import { getFeedbackLink } from './methods/feedback-link';
 import { getReviewLink } from './methods/review-link';
-import { hashWallet } from './utils/wallet';
+import { walletHash } from './utils/wallet';
 
 /**
  * Default base URL for the App Oracle API
@@ -107,12 +107,12 @@ export class AppOracleSDK {
    * 
    * @example
    * ```typescript
-   * const hash = await sdk.hashWallet('0x1234...');
+   * const hash = await sdk.walletHash('0x1234...');
    * // Compare with _walletHash from deep link metadata
    * ```
    */
-  async hashWallet(wallet: string): Promise<string> {
-    return hashWallet(wallet);
+  async walletHash(wallet: string): Promise<string> {
+    return walletHash(wallet);
   }
 
   /**

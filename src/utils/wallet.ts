@@ -4,7 +4,7 @@
  * Use this to hash wallet addresses with the same algorithm used internally
  * for client-side verification of deep link ownership.
  */
-export async function hashWallet(wallet: string): Promise<string> {
+export async function walletHash(wallet: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(wallet.toLowerCase().trim());
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
