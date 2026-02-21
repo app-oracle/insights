@@ -2,7 +2,7 @@ import { SDKConfig, DeepLinkResponse, FeedbackLinkOptions, ReviewLinkOptions } f
 import { AppOracleError } from './errors';
 import { getFeedbackLink } from './methods/feedback-link';
 import { getReviewLink } from './methods/review-link';
-import { walletHash } from './utils/wallet';
+import { getWalletHash } from './utils/wallet';
 
 /**
  * Default base URL for the App Oracle API
@@ -14,7 +14,7 @@ const DEFAULT_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.ne
  * 
  * @example
  * ```typescript
- * const sdk = new AppOracleSDK({
+ * const sdk = new Insights({
  *   apiKey: 'your-api-key'
  * });
  * 
@@ -30,7 +30,7 @@ const DEFAULT_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.ne
  * console.log(result.url); // Deep link to share
  * ```
  */
-export class AppOracleSDK {
+export class Insights {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly timeout: number;
@@ -107,12 +107,12 @@ export class AppOracleSDK {
    * 
    * @example
    * ```typescript
-   * const hash = await sdk.walletHash('0x1234...');
+   * const hash = await sdk.getWalletHash('0x1234...');
    * // Compare with _walletHash from deep link metadata
    * ```
    */
-  async walletHash(wallet: string): Promise<string> {
-    return walletHash(wallet);
+  async getWalletHash(wallet: string): Promise<string> {
+    return getWalletHash(wallet);
   }
 
   /**

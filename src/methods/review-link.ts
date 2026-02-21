@@ -1,6 +1,6 @@
 import { ReviewLinkOptions, DeepLinkResponse } from '../types';
 import { stringifyMetadata } from '../utils/metadata';
-import { walletHash } from '../utils/wallet';
+import { getWalletHash } from '../utils/wallet';
 import { AppOracleError } from '../errors';
 
 const REVIEW_DEEPLINK_ENDPOINT = '/reviewDeepLink';
@@ -49,7 +49,7 @@ export async function getReviewLink(
   const stringifiedMetadata = stringifyMetadata(metadata);
 
   // Hash wallet for user verification
-  const walletHashValue = await walletHash(wallet);
+  const walletHashValue = await getWalletHash(wallet);
 
   // Construct the API endpoint
   const endpoint = `${context.baseUrl}${REVIEW_DEEPLINK_ENDPOINT}`;

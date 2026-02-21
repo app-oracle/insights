@@ -1,25 +1,61 @@
-# App Oracle SDK
+# App Oracle Insights SDK
 
 TypeScript SDK for generating feedback deep links via the App Oracle platform. Store metadata in Redis and create shareable deep links that route users to your mini-app with contextual feedback data.
 
 ## Installation
 
 ```bash
-npm install app-oracle-sdk
+npm install @apporacle/insights
 # or
-yarn add app-oracle-sdk
+yarn add @apporacle/insights
 # or
-bun add app-oracle-sdk
+bun add @apporacle/insights
 ```
+
+## ⚠️ Important: Server-Side Only
+
+**This SDK is designed for server-side use only.** Your API key provides full access to your App Oracle account and must be kept secret.
+
+- ✅ **DO** use this SDK in your backend server, API routes, or serverless functions
+- ✅ **DO** store your API key in environment variables
+- ❌ **DO NOT** use this SDK in client-side code (browser, mobile app)
+- ❌ **DO NOT** expose your API key in frontend code, git repositories, or public files
+
+## Security
+
+### Protecting Your API Key
+
+**Never hardcode your API key.** Always use environment variables:
+
+```bash
+# .env file (never commit this!)
+APP_ORACLE_API_KEY=your-api-key-here
+```
+
+```typescript
+// ✅ Good - uses environment variable
+const sdk = new Insights({
+  apiKey: process.env.APP_ORACLE_API_KEY!,
+});
+
+// ❌ Bad - hardcoded API key
+const sdk = new Insights({
+  apiKey: 'ak_1234567890', // NEVER DO THIS
+});
+```
+
+### Reporting Security Issues
+
+If you discover a security vulnerability, please email security@apporacle.com instead of using the issue tracker.
 
 ## Quick Start
 
 ```typescript
-import { AppOracleSDK } from 'app-oracle-sdk';
+import { Insights } from '@apporacle/insights';
 
-// Initialize the SDK
-const sdk = new AppOracleSDK({
-  apiKey: 'your-api-key',
+// Initialize the SDK with your API key from environment variables
+const sdk = new Insights({
+  apiKey: process.env.APP_ORACLE_API_KEY!,
 });
 
 // Generate a feedback deep link with wallet verification
@@ -39,14 +75,14 @@ console.log(result.key);  // abc123
 
 ## API Reference
 
-### `AppOracleSDK`
+### `Insights`
 
 The main SDK client for interacting with the App Oracle API.
 
 #### Constructor
 
 ```typescript
-new AppOracleSDK(config: SDKConfig)
+new Insights(config: SDKConfig)
 ```
 
 **Parameters:**
@@ -58,7 +94,7 @@ new AppOracleSDK(config: SDKConfig)
 **Example:**
 
 ```typescript
-const sdk = new AppOracleSDK({
+const sdk = new Insights({
   apiKey: process.env.APP_ORACLE_API_KEY!,
   timeout: 5000,
 });
@@ -122,7 +158,7 @@ const deepLink = await sdk.getFeedbackLink({
 // Use deepLink.key for tracking or analytics
 ```
 
-#### `walletHash(wallet)`
+#### `getWalletHash(wallet)`
 
 Hash a wallet address using SHA-256. Use this to verify wallet hashes match the same algorithm used internally.
 
@@ -138,11 +174,11 @@ This function can be used via the SDK instance or imported directly without init
 
 ```typescript
 // Via SDK instance
-const hash = await sdk.walletHash('0x1234567890abcdef');
+const hash = await sdk.getWalletHash('0x1234567890abcdef');
 
 // Or import directly without SDK
-import { walletHash } from 'app-oracle-sdk';
-const hash = await walletHash('0x1234567890abcdef');
+import { getWalletHash } from '@apporacle/insights';
+const hash = await getWalletHash('0x1234567890abcdef');
 
 // Compare with _walletHash from deep link metadata
 ```
@@ -152,7 +188,7 @@ const hash = await walletHash('0x1234567890abcdef');
 The SDK throws `AppOracleError` for all error conditions:
 
 ```typescript
-import { AppOracleSDK, AppOracleError } from 'app-oracle-sdk';
+import { Insights, AppOracleError } from '@apporacle/insights';
 
 try {
   const result = await sdk.getFeedbackLink({
@@ -195,10 +231,10 @@ import type {
   FeedbackMetadata, 
   FeedbackLinkOptions,
   DeepLinkResponse 
-} from 'app-oracle-sdk';
+} from '@apporacle/insights';
 
 const config: SDKConfig = {
-  apiKey: 'key',
+  apiKey: process.env.APP_ORACLE_API_KEY!,
 };
 
 const options: FeedbackLinkOptions = {

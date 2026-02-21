@@ -1,5 +1,5 @@
 {
-  "name": "app-oracle-sdk",
+  "name": "@apporacle/insights",
   "version": "0.1.0",
   "description": "SDK for generating feedback deep links via App Oracle",
   "keywords": [
@@ -13,10 +13,10 @@
   "author": "Waylan Sands",
   "repository": {
     "type": "git",
-    "url": "https://github.com/waylansands/app-oracle-sdk"
+    "url": "https://github.com/apporacle/insights"
   },
   "bugs": {
-    "url": "https://github.com/waylansands/app-oracle-sdk/issues"
+    "url": "https://github.com/apporacle/insights/issues"
   },
   "type": "module",
   "main": "./dist/index.cjs",

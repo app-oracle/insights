@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AppOracleSDK, AppOracleError } from '../src';
+import { Insights, AppOracleError } from '../src';
 
 const TEST_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.net';
 const TEST_ENDPOINT = `${TEST_BASE_URL}/feedbackDeepLink`;
 
-describe('AppOracleSDK - getFeedbackLink', () => {
-  let sdk: AppOracleSDK;
+describe('Insights - getFeedbackLink', () => {
+  let sdk: Insights;
 
   beforeEach(() => {
-    sdk = new AppOracleSDK({
+    sdk = new Insights({
       apiKey: 'test-api-key',
     });
     

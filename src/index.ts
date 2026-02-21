@@ -5,7 +5,7 @@
  * @packageDocumentation
  */
 
-export { AppOracleSDK } from './client';
+export { Insights } from './client';
 export { AppOracleError } from './errors';
-export { walletHash } from './utils/wallet';
+export { getWalletHash } from './utils/wallet';
 export type { SDKConfig, UserMetadata, FeedbackLinkOptions, ReviewLinkOptions, DeepLinkResponse } from './types';

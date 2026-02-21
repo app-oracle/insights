@@ -1,6 +1,6 @@
 import { FeedbackLinkOptions, DeepLinkResponse } from '../types';
 import { stringifyMetadata } from '../utils/metadata';
-import { walletHash } from '../utils/wallet';
+import { getWalletHash } from '../utils/wallet';
 import { AppOracleError } from '../errors';
 
 const FEEDBACK_DEEPLINK_ENDPOINT = '/feedbackDeepLink';
@@ -63,7 +63,7 @@ export async function getFeedbackLink(
   // The wallet is hashed using SHA-256 to protect user privacy
   let walletHashValue: string | undefined;
   if (wallet && wallet.trim() !== '') {
-    walletHashValue = await walletHash(wallet);
+    walletHashValue = await getWalletHash(wallet);
   }
 
   // Construct the API endpoint
