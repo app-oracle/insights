@@ -5,11 +5,11 @@ TypeScript SDK for generating feedback deep links via the App Oracle platform. S
 ## Installation
 
 ```bash
-npm install @apporacle/insights
+npm install @app-oracle/insights
 # or
-yarn add @apporacle/insights
+yarn add @app-oracle/insights
 # or
-bun add @apporacle/insights
+bun add @app-oracle/insights
 ```
 
 ## ⚠️ Important: Server-Side Only
@@ -51,7 +51,7 @@ If you discover a security vulnerability, please email security@apporacle.com in
 ## Quick Start
 
 ```typescript
-import { Insights } from '@apporacle/insights';
+import { Insights } from '@app-oracle/insights';
 
 // Initialize the SDK with your API key from environment variables
 const sdk = new Insights({
@@ -177,7 +177,7 @@ This function can be used via the SDK instance or imported directly without init
 const hash = await sdk.getWalletHash('0x1234567890abcdef');
 
 // Or import directly without SDK
-import { getWalletHash } from '@apporacle/insights';
+import { getWalletHash } from '@app-oracle/insights';
 const hash = await getWalletHash('0x1234567890abcdef');
 
 // Compare with _walletHash from deep link metadata
@@ -188,7 +188,7 @@ const hash = await getWalletHash('0x1234567890abcdef');
 The SDK throws `AppOracleError` for all error conditions:
 
 ```typescript
-import { Insights, AppOracleError } from '@apporacle/insights';
+import { Insights, AppOracleError } from '@app-oracle/insights';
 
 try {
   const result = await sdk.getFeedbackLink({
@@ -231,7 +231,7 @@ import type {
   FeedbackMetadata, 
   FeedbackLinkOptions,
   DeepLinkResponse 
-} from '@apporacle/insights';
+} from '@app-oracle/insights';
 
 const config: SDKConfig = {
   apiKey: process.env.APP_ORACLE_API_KEY!,
