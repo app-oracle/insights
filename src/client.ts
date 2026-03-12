@@ -7,7 +7,7 @@ import { getWalletHash } from './utils/wallet';
 /**
  * Default base URL for the App Oracle API
  */
-const DEFAULT_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.net';
+const DEFAULT_BASE_URL = 'https://us-central1-app-oracle-insights.cloudfunctions.net';
 
 /**
  * App Oracle SDK Client

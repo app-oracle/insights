@@ -1,287 +1,212 @@
-# App Oracle Insights SDK
+# Welcome to Insights by App Oracle.
 
-TypeScript SDK for generating feedback deep links via the App Oracle platform. Store metadata in Redis and create shareable deep links that route users to your mini-app with contextual feedback data.
+Insights is a lightweight server-side SDK for generating secure deep links into the Audience Insights World mini app.
+
+Use Insights to collect feedback and reviews backed by contextual data to support better business decisions. Each signed link ensures responses are securely tied to the experience within your app, guaranteed.
+
+<p align="center">
+  <img src="assets/demo.gif" alt="Insights Demo" width="300" />
+</p>
 
 ## Installation
 
 ```bash
 npm install @app-oracle/insights
-# or
-yarn add @app-oracle/insights
-# or
-bun add @app-oracle/insights
 ```
-
-## ⚠️ Important: Server-Side Only
-
-**This SDK is designed for server-side use only.** Your API key provides full access to your App Oracle account and must be kept secret.
-
-- ✅ **DO** use this SDK in your backend server, API routes, or serverless functions
-- ✅ **DO** store your API key in environment variables
-- ❌ **DO NOT** use this SDK in client-side code (browser, mobile app)
-- ❌ **DO NOT** expose your API key in frontend code, git repositories, or public files
-
-## Security
-
-### Protecting Your API Key
-
-**Never hardcode your API key.** Always use environment variables:
-
-```bash
-# .env file (never commit this!)
-APP_ORACLE_API_KEY=your-api-key-here
-```
-
-```typescript
-// ✅ Good - uses environment variable
-const sdk = new Insights({
-  apiKey: process.env.APP_ORACLE_API_KEY!,
-});
-
-// ❌ Bad - hardcoded API key
-const sdk = new Insights({
-  apiKey: 'ak_1234567890', // NEVER DO THIS
-});
-```
-
-### Reporting Security Issues
-
-If you discover a security vulnerability, please email security@apporacle.com instead of using the issue tracker.
 
 ## Quick Start
 
 ```typescript
 import { Insights } from '@app-oracle/insights';
 
-// Initialize the SDK with your API key from environment variables
-const sdk = new Insights({
+// Use a global constant so your app version stays up to date across all links
+const APP_VERSION = '1.2.3';
+
+const insights = new Insights({
   apiKey: process.env.APP_ORACLE_API_KEY!,
 });
 
-// Generate a feedback deep link with wallet verification
-const result = await sdk.getFeedbackLink({
-  appVersion: '1.2.3',
+const result = await insights.getFeedbackLink({
+  appVersion: APP_VERSION,
   wallet: '0x1234567890abcdef',
   metadata: {
     userId: '12345',
     platform: 'ios',
-    deviceModel: 'iPhone 14',
-  }
+  },
 });
 
-console.log(result.url);  // apporacle://feedback?key=abc123
-console.log(result.key);  // abc123
+// https://world.org/mini-app?app_id=abc123&path=/leave-feedback/def456
+console.log(result.url);
 ```
+
+> Store your API key in environment variables. This SDK is intended for server-side use — never expose your key in client-side code.
+
+## How It Works
+
+The SDK generates deep links that open the **Insights mini app** — a hosted review and feedback experience powered by App Oracle. When a user taps the link, they're taken to a form pre-filled with the context you provide, making it easy for them to leave meaningful feedback or an app review.
+
+<p align="center">
+  <img src="assets/discover.png" alt="Discover" width="200" />
+  <img src="assets/feedback.png" alt="Feedback" width="200" />
+</p>
+<p align="center">
+  <img src="assets/data.png" alt="Data" width="200" />
+  <img src="assets/qr-code.png" alt="QR Code" width="200" />
+</p>
 
 ## API Reference
 
-### `Insights`
-
-The main SDK client for interacting with the App Oracle API.
-
-#### Constructor
+### Constructor
 
 ```typescript
 new Insights(config: SDKConfig)
 ```
 
-**Parameters:**
+| Parameter      | Type     | Required | Description                           |
+| -------------- | -------- | -------- | ------------------------------------- |
+| `apiKey`       | `string` | Yes      | Your App Oracle API key               |
+| `baseUrl`      | `string` | No       | Custom API base URL                   |
+| `timeout`      | `number` | No       | Request timeout in ms (default 10000) |
 
-- `config.apiKey` (string, required) - Your App Oracle API key
-- `config.baseUrl` (string, optional) - Custom API base URL (default: `https://us-central1-app-oracle-b7156.cloudfunctions.net`)
-- `config.timeout` (number, optional) - Request timeout in milliseconds (default: `10000`)
+### `getFeedbackLink(options)`
 
-**Example:**
+Generate a feedback deep link with optional wallet verification and app review request.
 
 ```typescript
-const sdk = new Insights({
-  apiKey: process.env.APP_ORACLE_API_KEY!,
-  timeout: 5000,
+const result = await insights.getFeedbackLink({
+  appVersion: APP_VERSION,
+  wallet: '0x1234567890abcdef',
+  metadata: {
+    userId: 'user_12345',
+    feature: 'checkout',
+    proUser: true,
+  },
 });
 ```
 
-#### `getFeedbackLink(options)`
+**Options**
 
-Generate a feedback deep link with wallet verification and optional app review request.
+| Parameter          | Type              | Required | Description                                                                 |
+| ------------------ | ----------------- | -------- | --------------------------------------------------------------------------- |
+| `appVersion`       | `string`          | Yes      | Your app version (e.g. `"1.0.0"`)                                          |
+| `wallet`           | `string`          | No       | User's wallet address — hashed with SHA-256 before sending                  |
+| `metadata`         | `UserMetadata`    | No       | Key-value pairs to store with the feedback (max 4 fields)                   |
+| `requestAppReview` | `boolean`         | No       | Request an app review (defaults to `true` when wallet provided)             |
+| `redirectUrl`      | `string`          | No       | Deep link to redirect the user after they leave feedback                    |
 
-**Parameters:**
-
-- `options.appVersion` (string, required) - The version of your app (e.g., "1.0.0")
-- `options.wallet` (string, optional) - User's wallet address (hashed with SHA-256 for privacy)
-- `options.metadata` (Record<string, string | number | boolean | Date | null>, optional) - Key-value pairs to store (max 3 fields with wallet, 4 without)
-- `options.requestAppReview` (boolean, optional) - Request app review (defaults to `true` when wallet provided, `false` otherwise)
-
-**Returns:** `Promise<DeepLinkResponse>`
+**Response**
 
 ```typescript
 interface DeepLinkResponse {
-  url: string;        // The deep link URL to share
-  key: string;        // Unique key for Redis lookup
-  expiresAt?: string; // Optional expiration timestamp
+  url: string;         // The deep link to share with users
+  expiresAt?: string;  // Expiration timestamp (if applicable)
 }
 ```
 
-**Example:**
+### `getReviewLink(options)`
+
+Generate a review-only deep link. Requires a wallet address for user verification.
 
 ```typescript
-// With wallet verification and app review (review defaults to true)
-const deepLink = await sdk.getFeedbackLink({
-  appVersion: '2.1.0',
-  wallet: '0x1234567890abcdef',
-  metadata: {
-    userId: 'user_12345',
-    sessionId: 'sess_abc789',
-    feature: 'checkout',
-  }
-});
-
-// Without wallet (no review request)
-const deepLink = await sdk.getFeedbackLink({
-  appVersion: '2.1.0',
-  metadata: {
-    userId: 'user_12345',
-    sessionId: 'sess_abc789',
-    feature: 'checkout',
-    timestamp: new Date(),
-  }
-});
-
-// With wallet but opt out of review
-const deepLink = await sdk.getFeedbackLink({
-  appVersion: '2.1.0',
+const result = await insights.getReviewLink({
+  appVersion: APP_VERSION,
   wallet: '0x1234567890abcdef',
   metadata: { userId: 'user_12345' },
-  requestAppReview: false
 });
-
-// Share deepLink.url with your users
-// Use deepLink.key for tracking or analytics
 ```
 
-#### `getWalletHash(wallet)`
+| Parameter    | Type           | Required | Description                                              |
+| ------------ | -------------- | -------- | -------------------------------------------------------- |
+| `appVersion` | `string`       | Yes      | Your app version                                         |
+| `wallet`     | `string`       | Yes      | User's wallet address (required for review verification) |
+| `metadata`   | `UserMetadata` | No       | Key-value pairs to store with the review (max 4 fields)  |
+| `redirectUrl`| `string`       | No       | Deep link to redirect the user after they leave a review |
 
-Hash a wallet address using SHA-256. Use this to verify wallet hashes match the same algorithm used internally.
+### `getWalletHash(wallet)`
 
-This function can be used via the SDK instance or imported directly without initializing the SDK.
-
-**Parameters:**
-
-- `wallet` (string, required) - Wallet address to hash
-
-**Returns:** `Promise<string>` - SHA-256 hash as hex string
-
-**Example:**
+Hash a wallet address using SHA-256. Useful for verifying wallet hashes match the algorithm used internally.
 
 ```typescript
-// Via SDK instance
-const hash = await sdk.getWalletHash('0x1234567890abcdef');
+const hash = await insights.getWalletHash('0x1234567890abcdef');
 
-// Or import directly without SDK
+// Also available as a standalone import
 import { getWalletHash } from '@app-oracle/insights';
-const hash = await getWalletHash('0x1234567890abcdef');
-
-// Compare with _walletHash from deep link metadata
 ```
 
-### Error Handling
+## Metadata
 
-The SDK throws `AppOracleError` for all error conditions:
+Metadata lets you attach context to each feedback or review link. This can help you segment responses, trace feedback to specific features, or correlate with your own analytics.
+
+Each link supports up to **4 metadata fields** (this limit may increase in the future). Values can be any of the following types:
 
 ```typescript
-import { Insights, AppOracleError } from '@app-oracle/insights';
+type UserMetadata = Record<string, string | number | boolean | Date | null>;
+```
+
+```typescript
+const result = await insights.getFeedbackLink({
+  appVersion: APP_VERSION,
+  metadata: {
+    userId: 'user_12345',
+    proUser: true,
+    loginCount: 42,
+    lastSeen: new Date(),
+  },
+});
+```
+
+## Error Handling
+
+All errors are thrown as `AppOracleError` with a `code` and optional `statusCode`:
+
+```typescript
+import { AppOracleError } from '@app-oracle/insights';
 
 try {
-  const result = await sdk.getFeedbackLink({
-    appVersion: '1.0.0',
-    wallet: '0x123',
-    metadata: { userId: '123' }
-  });
+  const result = await insights.getFeedbackLink({ appVersion: APP_VERSION });
 } catch (error) {
   if (error instanceof AppOracleError) {
-    console.error('Error code:', error.code);
-    console.error('Status code:', error.statusCode);
-    
-    if (error.isAuthError()) {
-      // Handle authentication errors
-    } else if (error.isValidationError()) {
-      // Handle validation errors
-    } else if (error.isNetworkError()) {
-      // Handle network errors
-    }
+    error.isAuthError();       // Invalid API key
+    error.isValidationError(); // Invalid input
+    error.isNetworkError();    // Network failure
   }
 }
 ```
 
-### Error Types
+| Code               | Description                  |
+| ------------------ | ---------------------------- |
+| `VALIDATION_ERROR` | Invalid input parameters     |
+| `AUTH_ERROR`        | Authentication failed        |
+| `NETWORK_ERROR`    | Network request failed       |
+| `TIMEOUT_ERROR`    | Request exceeded timeout     |
+| `API_ERROR`        | API returned an error        |
+| `INVALID_RESPONSE` | Malformed response from API  |
 
-- `VALIDATION_ERROR` - Invalid input parameters
-- `AUTH_ERROR` - Authentication failed (invalid API key)
-- `NETWORK_ERROR` - Network request failed
-- `TIMEOUT_ERROR` - Request exceeded timeout
-- `API_ERROR` - API returned an error response
-- `INVALID_RESPONSE` - API returned malformed data
+## TypeScript
 
-## TypeScript Support
-
-The SDK is written in TypeScript and includes full type definitions:
+Full type definitions are included. All types can be imported directly:
 
 ```typescript
-import type { 
-  SDKConfig, 
-  FeedbackMetadata, 
+import type {
+  SDKConfig,
+  UserMetadata,
   FeedbackLinkOptions,
-  DeepLinkResponse 
+  ReviewLinkOptions,
+  DeepLinkResponse,
 } from '@app-oracle/insights';
-
-const config: SDKConfig = {
-  apiKey: process.env.APP_ORACLE_API_KEY!,
-};
-
-const options: FeedbackLinkOptions = {
-  appVersion: '1.0.0',
-  wallet: '0x123',
-  metadata: {
-    userId: '123',
-    platform: 'android',
-  }
-};
 ```
 
 ## Development
 
 ```bash
-# Install dependencies
-bun install
-
-# Start development mode
-bun run dev
-
-# Build for production
-bun run build
-
-# Run tests
-bun run test
-
-# Lint code
-bun run lint
-
-# Format code
-bun run format
+bun install       # Install dependencies
+bun run dev       # Development mode
+bun run build     # Production build
+bun run test      # Run tests
+bun run lint      # Lint
+bun run format    # Format
 ```
-
-## Module Formats
-
-This library exports both ESM and CommonJS formats:
-
-- `dist/index.js` - ESM
-- `dist/index.cjs` - CommonJS
-- `dist/index.d.ts` - TypeScript declarations
-
-## Requirements
-
-- Node.js >= 20
-- TypeScript >= 5.0 (for development)
 
 ## License
 
-MIT © Waylan Sands
+MIT
