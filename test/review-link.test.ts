@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Insights, AppOracleError } from '../src';
 
-const TEST_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.net';
+const TEST_BASE_URL = 'https://us-central1-app-oracle-insights.cloudfunctions.net';
 const TEST_ENDPOINT = `${TEST_BASE_URL}/reviewDeepLink`;
 
 describe('Insights - getReviewLink', () => {

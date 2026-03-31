@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Insights, AppOracleError } from '../src';
 
-const TEST_BASE_URL = 'https://us-central1-app-oracle-b7156.cloudfunctions.net';
+const TEST_BASE_URL = 'https://us-central1-app-oracle-insights.cloudfunctions.net';
 
 describe('Insights - Constructor', () => {
   it('should create an instance with valid config', () => {

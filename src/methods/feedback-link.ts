@@ -89,7 +89,7 @@ export async function getFeedbackLink(
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${context.apiKey}`,
-        'X-App-Oracle-SDK': 'typescript/0.1.0',
+        'X-App-Oracle-SDK': 'typescript/0.2.0',
       },
       body: JSON.stringify(payload),
       signal: controller.signal,

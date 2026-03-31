@@ -43,7 +43,7 @@ export class Insights {
 
     this.apiKey = config.apiKey;
     this.baseUrl = config.baseUrl || DEFAULT_BASE_URL;
-    this.timeout = config.timeout || 10000;
+    this.timeout = config.timeout || 30000;
   }
 
   private getContext() {
